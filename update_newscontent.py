@@ -11,9 +11,12 @@ else :
 	print market+" is not a valid market!"
 '''
 ustock_obj = ustock.ustock()
-host = set()
+host_count = dict()
 for new in ustock_obj.get_link('OK'):
 	parsedTuple = urlparse.urlparse(new['link'].encode())
-	host.add(parsedTuple.netloc)
-for n in host:
-	print n
+	if not (parsedTuple.netloc in host_count):
+		host_count[parsedTuple.netloc] = 1
+	else:
+		host_count[parsedTuple.netloc] = host_count[parsedTuple.netloc] + 1
+print sorted(host_count.items(), key=lambda d: d[1]) 
+#pprint(host_count)
