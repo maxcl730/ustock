@@ -52,7 +52,8 @@ class ustock:
 				
 				news['symbol'] = symbol
 				news['title'] = entry.title
-				news['link'] = 'http' + entry.link.split('*http')[1]
+				news_link = 'http' + entry.link.split('*http')[1]
+				news['link'] = re.sub(re.compile("=yahoo",re.I),"=maxcl",news_link)
 				news['desc'] = entry.summary
 				timetuple = list(entry.published_parsed[0:8]) + [-1]
 				news['time'] = time.mktime(timetuple)
