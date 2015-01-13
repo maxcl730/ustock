@@ -7,10 +7,11 @@ sys.getdefaultencoding()
 reload(sys)
 class ustock:
 	def __init__(self):
-		self.ustock_mongo_conn = pymongo.Connection('192.168.1.204', 27017)
+		self.ustock_mongo_conn = pymongo.Connection('223.202.40.75', 27017)
 		if not self.ustock_mongo_conn.alive():
 			print "Mongodb(ustock) Connection failed"
 		self.ustock_db = self.ustock_mongo_conn['ustock']
+		self.ustock_db.authenticate('ustock','chengliang')
 
 	def symbol_update(self,market,symbol):
 		id = market + '_' + symbol['Symbol']
