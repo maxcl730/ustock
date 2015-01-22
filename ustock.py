@@ -1,8 +1,7 @@
 #!/usr/bin/python
-import feedparser,pymongo
+import feedparser,pymongo,sys
 import time,datetime,re,hashlib
 from pprint import pprint
-import sys
 sys.getdefaultencoding()
 reload(sys)
 class ustock:
@@ -22,6 +21,12 @@ class ustock:
 			if not update_time:
 				self.ustock_db['update_time'].insert({"_id":id,"dotime":int(time.time())})
 
+	def symbols_get_for_market(self,market):
+		symbols = []
+		for symbol in self.ustock_db['symbols'].find({'market':market},{'_id':False, 'LastSale': False, 'Summary Quote': False, 'market': False}):
+			symbols.append(symbol)
+		return symbols
+		
 	def stock_info_oldest_update(self,market):
 		regex = "^" + market
 		oldest_update = self.ustock_db['update_time'].find_one({"$query":{"_id":re.compile(regex,re.I)},"$orderby":{"dotime":pymongo.ASCENDING}},{'_id': False})
@@ -43,30 +48,32 @@ class ustock:
 		try:
 			if info.feed.title.find("feed not found") > 1 :return
 			for entry in info.entries:
-				#self.ustock_db['news_list']
+				#self.ustock_db['news_lists']
 				id = market + "_" + symbol
 				try:
 					id = hashlib.md5(id + entry.title).hexdigest()
 				except UnicodeEncodeError:
 					continue
-				
+				news['docid'] = id
 				news['symbol'] = symbol
+				news['sourcename'] = symbol
 				news['title'] = entry.title
 				news_link = 'http' + entry.link.split('*http')[1]
-				news['link'] = re.sub(re.compile("=yahoo",re.I),"=maxcl",news_link)
-				news['desc'] = entry.summary
+				news['url'] = re.sub(re.compile("=yahoo",re.I),"=maxcl",news_link)
+				news['content168'] = entry.summary
 				timetuple = list(entry.published_parsed[0:8]) + [-1]
-				news['time'] = time.mktime(timetuple)
+				news['date'] = time.mktime(timetuple)
+				news['CTIME'] = time.time()
 
-				find_news = self.ustock_db['news_list'].find_one({"_id":id})
+				find_news = self.ustock_db['news_lists'].find_one({"docid":id})
 				if not find_news:
-					self.ustock_db['news_list'].update({"_id":id},news ,upsert=True)
+					self.ustock_db['news_lists'].update({'docid':id},news ,upsert=True)
 		except AttributeError:
 			return 
 
-	def get_link(self,symbol):
+	def get_news_link(self,symbol):
 		news_record = []
-		for new in self.ustock_db['news_list'].find({},{'desc':False, 'time': False, 'title': False}):
+		for new in self.ustock_db['news_lists'].find({'symbol':symbol},{'content168':False, 'date': False, 'sourcename': False, '_id': False}):
 			#print new['link'].encode
 			news_record.append(new)
 		return news_record

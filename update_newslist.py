@@ -12,7 +12,7 @@ if market in ('amex','nasdaq','nyse'):
 	ustock_obj = ustock.ustock()
 	oldest_update = ustock_obj.stock_info_oldest_update(market)
 	while 1 :
-		if oldest_update + 7200 < time.time():
+		if oldest_update + 86400 < time.time():
 			ustock_obj.stock_info_update(market,1)
 		else:
 			exit(0)

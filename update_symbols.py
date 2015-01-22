@@ -28,6 +28,7 @@ while True:
 				for object in symbol_object :
 					symbol[object] = record.split('","')[count].strip()
 					count = count + 1
+				symbol['market'] = market
 				ustock_obj.symbol_update(market,symbol)
 		except ValueError:
 			continue
