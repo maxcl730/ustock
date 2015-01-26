@@ -1,27 +1,49 @@
 #!/usr/bin/python
-import os,sys,re,urlparse
+import os,sys,re,urlparse,signal,hashlib,time
 import ustock,newsSpider
 from pprint import pprint
+
+def myhandle(signalNun, currentStackFrame):
+	print "%s exit(%d)." %(sys.argv[0],signalNun)
+	sys.exit(0)
+
+signal.signal(signal.SIGINT,myhandle)
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 market = sys.argv[1]
 if not (market in ('amex','nasdaq','nyse')):
 	print market+" is not a valid market!"
 	exit(1)
 
 #ustock_obj.stock_info_update(market,1)
+'''
+#Test symbos
 Symbols = ('CRESY','JRJC','YY','BABA')
+'''
+
 ustock_obj = ustock.ustock()
-#stocks = ustock_obj.symbols_get_for_market(market)
-#for stock in stocks:
-for Symbol in Symbols:
-	#Symbol = stock['Symbol']
+stocks = ustock_obj.symbols_get_for_market(market)
+for stock in stocks:
+	Symbol = stock['Symbol']
 	print ("=======%s: news list=======") % Symbol
-	for news in ustock_obj.get_news_link(Symbol):
+	for news in ustock_obj.get_untreated_news(Symbol):
 		parsedTuple = urlparse.urlparse(news['url'].encode())
-		if re.search('^http:\/\/finance.yahoo.com\/news\/',news['url']):
-			pprint(news)
-			hostname_func = re.sub('\.','_',parsedTuple.netloc)
-			spider = newsSpider.newsSpider(news['url'])
-			spider.get_page_to_soup()
-			article = spider.finance_yahoo_com()
-			hostname_func = re.sub('\.','_',parsedTuple.netloc)
-			pprint(article)
+		pprint(news)
+		hostname_func = re.sub('\.','_',parsedTuple.netloc)
+		spider = newsSpider.newsSpider(news['url'])
+		'''
+		if hasattr(spider,hostname_func):
+			hostname_func = 'spider.'+hostname_func+'()'
+			article = eval(hostname_func)
+			article['docid'] = hashlib.md5(market + "_" + Symbol + news['title']).hexdigest()
+			article['date'] = news['date']
+			article['nike'] = Symbol
+			article['url'] = news['url']
+			article['CTIME'] = int(time.time())
+			article['title'] = news['title']
+			print '---------------'
+			print article
+			ustock_obj.put_news_content(article)
+			exit(0)
+		'''

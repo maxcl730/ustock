@@ -63,7 +63,7 @@ class ustock:
 				news['content168'] = entry.summary
 				timetuple = list(entry.published_parsed[0:8]) + [-1]
 				news['date'] = time.mktime(timetuple)
-				news['CTIME'] = time.time()
+				news['CTIME'] = 0
 
 				find_news = self.ustock_db['news_lists'].find_one({"docid":id})
 				if not find_news:
@@ -77,3 +77,15 @@ class ustock:
 			#print new['link'].encode
 			news_record.append(new)
 		return news_record
+
+	def get_untreated_news(self,symbol):
+		news_record = []
+		for new in self.ustock_db['news_lists'].find({'symbol':symbol,'CTIME':0},{'content168':False, 'sourcename': False, '_id': False}):
+			#print new['link'].encode
+			news_record.append(new)
+		return news_record
+
+	def put_news_content(self,record):
+		self.ustock_db['news_contents'].update({'docid':record['docid']},record,upsert=True)
+		self.ustock_db['news_lists'].update({'docid':record['docid']},{"$set":{"CTIME":int(time.time())}})
+		self.ustock_db['symbols'].update({"Symbol":record['nick']},{"$inc":{"DocNum":1}})
