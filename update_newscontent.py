@@ -32,13 +32,12 @@ for stock in stocks:
 		pprint(news)
 		hostname_func = re.sub('\.','_',parsedTuple.netloc)
 		spider = newsSpider.newsSpider(news['url'])
-		'''
 		if hasattr(spider,hostname_func):
 			hostname_func = 'spider.'+hostname_func+'()'
 			article = eval(hostname_func)
 			article['docid'] = hashlib.md5(market + "_" + Symbol + news['title']).hexdigest()
 			article['date'] = news['date']
-			article['nike'] = Symbol
+			article['nick'] = Symbol
 			article['url'] = news['url']
 			article['CTIME'] = int(time.time())
 			article['title'] = news['title']
@@ -46,4 +45,3 @@ for stock in stocks:
 			print article
 			ustock_obj.put_news_content(article)
 			exit(0)
-		'''
