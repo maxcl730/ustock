@@ -14,7 +14,9 @@ class ustock:
 
 	def symbol_update(self,market,symbol):
 		id = market + '_' + symbol['Symbol']
-		self.ustock_db['symbols'].update({"_id":id},symbol ,upsert=True)
+		self.ustock_db['symbols'].remove({"_id":id})
+		symbol['_id'] = id
+		self.ustock_db['symbols'].insert(symbol)
 		print id
 		if not(id.find('^') > 1 or id.find('/') > 1) :
 			update_time = self.ustock_db['update_time'].find_one({"_id":id})

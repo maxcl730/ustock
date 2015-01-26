@@ -70,7 +70,6 @@ class newsSpider:
 		page_content.extract()
 		#yahoo_a_link = page_content.findAll('a', src=re.compile("\/q?s")
 		#[a_tag.parent.extract() for a_tag in yahoo_a_link]
-
 		self.news_dict['title'] = page_title.h1.string
 		temp_content = self.remove_unuseful_tag(page_content)
 		temp_content = self.remove_unnecessary_tags(temp_content)
