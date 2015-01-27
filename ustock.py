@@ -51,9 +51,8 @@ class ustock:
 			if info.feed.title.find("feed not found") > 1 :return
 			for entry in info.entries:
 				#self.ustock_db['news_lists']
-				id = market + "_" + symbol
 				try:
-					id = hashlib.md5(id + entry.title).hexdigest()
+					id = hashlib.md5(market + "_" + symbol + "_" + str(entry.title)).hexdigest()
 				except UnicodeEncodeError:
 					continue
 				news['docid'] = id

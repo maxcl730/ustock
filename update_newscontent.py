@@ -26,7 +26,7 @@ ustock_obj = ustock.ustock()
 stocks = ustock_obj.symbols_get_for_market(market)
 for stock in stocks:
 	Symbol = stock['Symbol']
-	print ("=======%s: news list=======") % Symbol
+	print ("=======%s_%s: news list=======") % (market,Symbol)
 	for news in ustock_obj.get_untreated_news(Symbol):
 		parsedTuple = urlparse.urlparse(news['url'].encode())
 		pprint(news)
@@ -35,7 +35,9 @@ for stock in stocks:
 		if hasattr(spider,hostname_func):
 			hostname_func = 'spider.'+hostname_func+'()'
 			article = eval(hostname_func)
-			article['docid'] = hashlib.md5(market + "_" + Symbol + news['title']).hexdigest()
+			if not article :
+				continue
+			article['docid'] = hashlib.md5(market + "_" + Symbol + "_" + str(news['title'])).hexdigest()
 			article['date'] = news['date']
 			article['nick'] = Symbol
 			article['url'] = news['url']
@@ -44,4 +46,4 @@ for stock in stocks:
 			print '---------------'
 			print article
 			ustock_obj.put_news_content(article)
-			exit(0)
+			raw_input('press any key to continue')

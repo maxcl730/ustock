@@ -15,7 +15,10 @@ class newsSpider:
 		self.news_dict = dict()
 
 	def get_page_to_soup(self):
-		self.response = urllib2.urlopen(self.request)
+		try :
+			self.response = urllib2.urlopen(self.request, timeout=30)
+		except socket.error :
+			return None
 		if self.response.info().get('Content-Encoding') == 'gzip':
 			buf = StringIO(self.response.read())
 			f = gzip.GzipFile(fileobj = buf)
@@ -62,7 +65,8 @@ class newsSpider:
 	def finance_yahoo_com(self):
 		if not re.search('^http:\/\/finance.yahoo.com\/news\/',self.news_url) :
 			return None
-		self.get_page_to_soup()
+		if not self.get_page_to_soup():
+			return None
 		#keep_tags = ['a', 'table', 'td', 'tr', 'li' , 'br', 'ul' ,'ol', 'th']
 		page_title = self.news_soup.find('header',attrs={"class":"header"})
 		page_content = self.news_soup.find('div',attrs={"class":"body yom-art-content clearfix"})
