@@ -35,7 +35,7 @@ for stock in stocks:
 		if hasattr(spider,hostname_func):
 			hostname_func = 'spider.'+hostname_func+'()'
 			article = eval(hostname_func)
-			if not article :
+			if article is None:
 				continue
 			article['docid'] = hashlib.md5(market + "_" + Symbol + "_" + str(news['title'])).hexdigest()
 			article['date'] = news['date']

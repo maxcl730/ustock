@@ -1,4 +1,4 @@
-import urllib2,sys,re,gzip,copy
+import urllib2,sys,re,gzip,copy,socket
 from StringIO import StringIO
 #from BeautifulSoup import BeautifulSoup, Comment, Tag
 from bs4 import BeautifulSoup, Comment, Tag
@@ -35,6 +35,7 @@ class newsSpider:
 		if re.search("(gb2312|gbk)",charset,re.I):
 			page = unicode(page,charset.lower(),'ignore').encode('utf-8','ignore')
 		self.news_soup = BeautifulSoup(page)
+		return True
 
 	def remove_unuseful_tag(self,content):
 		#remove function tags
@@ -62,10 +63,15 @@ class newsSpider:
 					del e[str(attribute)]
 		return content
 
+	def clean_relative_a_tag(self,content):
+		a_links = content.findAll('a', href=re.compile("^\/"))
+		[a.extract() for a in a_links] 
+		return content
+
 	def finance_yahoo_com(self):
 		if not re.search('^http:\/\/finance.yahoo.com\/news\/',self.news_url) :
 			return None
-		if not self.get_page_to_soup():
+		if self.get_page_to_soup() is None:
 			return None
 		#keep_tags = ['a', 'table', 'td', 'tr', 'li' , 'br', 'ul' ,'ol', 'th']
 		page_title = self.news_soup.find('header',attrs={"class":"header"})
@@ -80,3 +86,7 @@ class newsSpider:
 		str_content = str(self.clean_tag_attribute(temp_content))
 		self.news_dict['content'] = " ".join(str_content.encode('ascii',errors='ignore').split())
 		return self.news_dict
+
+	def www_noodls_com(self):
+		
+		return None
