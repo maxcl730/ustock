@@ -50,7 +50,7 @@ class ustock:
 		try:
 			if info.feed.title.find("feed not found") > 1 :return
 			for entry in info.entries:
-				#self.ustock_db['news_lists']
+				#self.ustock_db['articles']
 				try:
 					id = hashlib.md5(market + "_" + symbol + "_" + str(entry.title)).hexdigest()
 				except UnicodeEncodeError:
@@ -66,27 +66,30 @@ class ustock:
 				news['date'] = time.mktime(timetuple)
 				news['CTIME'] = 0
 
-				find_news = self.ustock_db['news_lists'].find_one({"docid":id})
+				find_news = self.ustock_db['articles'].find_one({"docid":id})
 				if not find_news:
-					self.ustock_db['news_lists'].update({'docid':id},news ,upsert=True)
+					self.ustock_db['articles'].update({'docid':id},news ,upsert=True)
 		except AttributeError:
 			return 
 
 	def get_news_link(self,symbol):
 		news_record = []
-		for new in self.ustock_db['news_lists'].find({'symbol':symbol},{'content168':False, 'date': False, 'sourcename': False, '_id': False}):
+		for new in self.ustock_db['articles'].find({'symbol':symbol,'CTIME':0},{'content168':False, 'date': False, 'sourcename': False, '_id': False}):
 			#print new['link'].encode
 			news_record.append(new)
 		return news_record
 
 	def get_untreated_news(self,symbol):
 		news_record = []
-		for new in self.ustock_db['news_lists'].find({'symbol':symbol,'CTIME':0},{'content168':False, 'sourcename': False, '_id': False}):
+		for new in self.ustock_db['articles'].find({'symbol':symbol,'CTIME':0},{'content168':False, 'sourcename': False, '_id': False}):
 			#print new['link'].encode
 			news_record.append(new)
 		return news_record
 
 	def put_news_content(self,record):
-		self.ustock_db['news_contents'].update({'docid':record['docid']},record,upsert=True)
-		self.ustock_db['news_lists'].update({'docid':record['docid']},{"$set":{"CTIME":int(time.time())}})
+		self.ustock_db['contents'].update({'docid':record['docid']},record,upsert=True)
+		self.ustock_db['articles'].update({'docid':record['docid']},{"$set":{"CTIME":int(time.time())}})
 		self.ustock_db['symbols'].update({"Symbol":record['nick']},{"$inc":{"DocNum":1}})
+
+	def delete_news_on_lists(self,docid):
+		self.ustock_db['articles'].remove({'docid':docid})
