@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import feedparser,pymongo,sys
+import feedparser,pymongo,sys,copy
 import time,datetime,re,hashlib
 from pprint import pprint
 sys.getdefaultencoding()
@@ -13,10 +13,19 @@ class ustock:
 		self.ustock_db.authenticate('ustock','chengliang')
 
 	def symbol_update(self,market,symbol):
+		external_record = copy.deepcopy(symbol)
+		external_record['externalid'] = external_record['Symbol']
+		external_record['name'] = external_record['Name']
+		del(external_record['Name'])
+		external_record['kind'] = external_record['industry']
+		del(external_record['industry'])
+		del(external_record['Summary Quote'])
+		external_record['TYPE'] = 0
+		external_record['SORT'] = 0
 		id = market + '_' + symbol['Symbol']
-		self.ustock_db['symbols'].remove({"_id":id})
+		self.ustock_db['externals'].remove({"_id":id})
 		symbol['_id'] = id
-		self.ustock_db['symbols'].insert(symbol)
+		self.ustock_db['externals'].insert(external_record)
 		print id
 		if not(id.find('^') > 1 or id.find('/') > 1) :
 			update_time = self.ustock_db['update_time'].find_one({"_id":id})
