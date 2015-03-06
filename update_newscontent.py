@@ -29,6 +29,9 @@ for stock in stocks:
 	print ("=======%s_%s: news list=======") % (market,Symbol)
 	for news in ustock_obj.get_untreated_news(Symbol):
 		parsedTuple = urlparse.urlparse(news['url'].encode())
+		#test special host
+		#if not re.search('^http:\/\/www.noodls.com\/view\/',news['url']) :
+		#	continue
 		pprint(news)
 		hostname_func = re.sub('\.','_',parsedTuple.netloc)
 		spider = newsSpider.newsSpider(news['url'])
@@ -37,13 +40,19 @@ for stock in stocks:
 			article = eval(hostname_func)
 			if article is None:
 				continue
+			article['ARTICLES'] = news['id']
+			article['id'] = news['id']
 			article['docid'] = hashlib.md5(market + "_" + Symbol + "_" + str(news['title'])).hexdigest()
+			article['_id'] = article['docid']
+			if article['code'] == 404 :
+				ustock_obj.delete_news_on_lists(article['_id'])
+				continue
 			article['date'] = news['date']
+			article['externalid'] = Symbol
 			article['nick'] = Symbol
 			article['url'] = news['url']
 			article['CTIME'] = int(time.time())
-			article['title'] = news['title']
-			print '---------------'
-			print article
-			ustock_obj.put_news_content(article)
+			
+			pprint(article)
 			raw_input('press any key to continue')
+			ustock_obj.put_news_content(article,market)

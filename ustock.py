@@ -9,8 +9,8 @@ class ustock:
 		self.ustock_mongo_conn = pymongo.Connection('223.202.40.75', 27017)
 		if not self.ustock_mongo_conn.alive():
 			print "Mongodb(ustock) Connection failed"
-		self.ustock_db = self.ustock_mongo_conn['ustock']
-		self.ustock_db.authenticate('ustock','chengliang')
+		self.ustock_db = self.ustock_mongo_conn['ustock_test']
+		self.ustock_db.authenticate('ustock_test','chengliang')
 
 	def symbol_update(self,market,symbol):
 		external_record = copy.deepcopy(symbol)
@@ -34,7 +34,7 @@ class ustock:
 
 	def symbols_get_for_market(self,market):
 		symbols = []
-		for symbol in self.ustock_db['symbols'].find({'market':market},{'_id':False, 'LastSale': False, 'Summary Quote': False, 'market': False}):
+		for symbol in self.ustock_db['externals'].find({'market':market},{'_id':False, 'LastSale': False, 'Sector': False, 'kind': False , 'externalid': False, 'market': False}):
 			symbols.append(symbol)
 		return symbols
 		
@@ -51,8 +51,15 @@ class ustock:
 			time.sleep(2)
 			self.ustock_db['update_time'].update({"_id":stock['_id']},{"dotime":int(time.time())})
 
+	def get_max_articleid(self):
+		id = 1
+		for article in  self.ustock_db['articles'].find({},{'_id':False,'id':True}).sort([("id",pymongo.DESCENDING)]).limit(1):
+			if article['id'] >= id :
+				id = article['id'] + 1
+		return id
+
 	def yahoo_rss_update(self,market,symbol):
-		news = dict()
+		article = dict()
 		print "======================" + symbol + "==================="
 		news_rss_url = "http://finance.yahoo.com/rss/headline?s=" + symbol
 		info = feedparser.parse(news_rss_url)
@@ -64,20 +71,29 @@ class ustock:
 					id = hashlib.md5(market + "_" + symbol + "_" + str(entry.title)).hexdigest()
 				except UnicodeEncodeError:
 					continue
-				news['docid'] = id
-				news['symbol'] = symbol
-				news['sourcename'] = symbol
-				news['title'] = entry.title
+				article['_id'] = id
+				article['id'] = self.get_max_articleid()
+				article['docid'] = id
+				article['symbol'] = symbol
+				article['sourcename'] = symbol
+				article['externalid'] = symbol
+				article['title'] = entry.title
 				news_link = 'http' + entry.link.split('*http')[1]
-				news['url'] = re.sub(re.compile("=yahoo",re.I),"=maxcl",news_link)
-				news['content168'] = entry.summary
+				article['url'] = re.sub(re.compile("=yahoo",re.I),"=maxcl",news_link)
+				article['content168'] = entry.summary
 				timetuple = list(entry.published_parsed[0:8]) + [-1]
-				news['date'] = time.mktime(timetuple)
-				news['CTIME'] = 0
+				article['date'] = int(time.mktime(timetuple))
+				article['CTIME'] = 0
+				article['OPENSOURCE'] = False
+				article['PUBLISH'] = True
+				article['SORT'] = 0
+				article['TYPE'] = 'info'
 
-				find_news = self.ustock_db['articles'].find_one({"docid":id})
+				pprint(article['title'])
+				#raw_input('press any key to continue')
+				find_news = self.ustock_db['articles'].find_one({"_id":id})
 				if not find_news:
-					self.ustock_db['articles'].update({'docid':id},news ,upsert=True)
+					self.ustock_db['articles'].update({'_id':id}, article, upsert=True)
 		except AttributeError:
 			return 
 
@@ -95,10 +111,10 @@ class ustock:
 			news_record.append(new)
 		return news_record
 
-	def put_news_content(self,record):
-		self.ustock_db['contents'].update({'docid':record['docid']},record,upsert=True)
-		self.ustock_db['articles'].update({'docid':record['docid']},{"$set":{"CTIME":int(time.time())}})
-		self.ustock_db['symbols'].update({"Symbol":record['nick']},{"$inc":{"DocNum":1}})
+	def put_news_content(self,record,market):
+		self.ustock_db['contents'].update({'_id':record['_id']},record,upsert=True)
+		self.ustock_db['articles'].update({'_id':record['_id']},{"$set":{"CTIME":int(time.time())}})
+		self.ustock_db['update_time'].update({"_id":market + '_' + record['externalid']},{"$inc":{"DocNum":1}})
 
 	def delete_news_on_lists(self,docid):
-		self.ustock_db['articles'].remove({'docid':docid})
+		self.ustock_db['articles'].remove({'_id':docid})
